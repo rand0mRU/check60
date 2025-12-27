@@ -16,13 +16,18 @@ if sys.argv[1] == "--init" or sys.argv[1] == "-i":
         "runs": [
             {
                 "start": "python test.py",
-                "input": "5\n2\n",
-                "output": "10\n"
+                "input": "10\n2\n",
+                "output": "5.0\n"
             },
             {
                 "start": "python test.py",
-                "input": "6\n5\n",
-                "output": "30"
+                "input": "30\n5\n",
+                "output": "6.0\n"
+            },
+            {
+                "start": "python test.py",
+                "input": "10\n4\n",
+                "output": "2.5\n"
             }
         ]
     }
