@@ -2,7 +2,7 @@ import json, subprocess, time, sys, os
 from colorama import Fore, Back, Style
 
 if len(sys.argv) == 1:
-    print("check60 utility.\nusage: check60 <name of test>\nFor usage you need file 'check60.json'.\n\nFor init, type 'check60 -i'\nFor init clear 'check60.json' file, type 'check60 -ic'")
+    print("check60 utility.\nusage: check60 <name of test>\nFor usage you need file 'check60.json'.\n\nUse flag '-se' if you need to continue check when check60 find an error\nFor init file 'check60.json', type 'check60 -i'\nFor init clear 'check60.json' file, type 'check60 -ic'")
     sys.exit(0)
 
 if sys.argv[1] == "--init" or sys.argv[1] == "-i":
@@ -78,7 +78,9 @@ try:
     config = json.load(open("check60.json", "r"))
 except FileNotFoundError:
     print(Fore.RED + "[check60] config file not found"+Fore.RESET)
-    sys.exit(0)
+    sys.exit(1)
+
+exitOnError = "-se" not in sys.argv
 
 test = sys.argv[1]
 allcorrect = True
@@ -87,7 +89,7 @@ try:
     compile = os.system(config[test]["compile"])
 except KeyError:
     print(Fore.RED + "[check60] KeyError"+Fore.RESET)
-    sys.exit(0)
+    sys.exit(1)
 
 if compile == 0:
     print(Fore.GREEN+"[compile] the file is compiled\n"+Fore.RESET)
@@ -130,12 +132,16 @@ if compile == 0:
 
         if stderr != "":
             print(Fore.RED + f"\n[check60] error in test {n}:{Fore.RESET}\n{stderr}" + Fore.RESET)
+            if exitOnError: 
+                break
 
     if allcorrect:
         print("\n[check60] test result: ok")
     else:
         print(f"\n[check60] test result:\n\t{Fore.GREEN}correct: {correct}\n\t{Fore.RED}incorrect: {incorrect}{Fore.RESET}")
+        sys.exit(1)
 
 else: 
     print(Fore.RED+f"[check60] Compilation failed. The process ended with the code {compile}"+Fore.RESET)
+    sys.exit(1)
     # config[i]
