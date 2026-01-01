@@ -2,7 +2,7 @@ import json, subprocess, time, sys, os
 from colorama import Fore, Back, Style
 
 if len(sys.argv) == 1:
-    print("check60 utility.\nusage: check60 <name of test>\nFor usage you need file 'check60.json'.\n\nUse flag '-se' if you need to continue check when check60 find an error\nFor init file 'check60.json', type 'check60 -i'\nFor init clear 'check60.json' file, type 'check60 -ic'")
+    print("check60 utility.\nusage: check60 <test name>\nFor usage you need file 'check60.json'.\n\nUse flag '-se' if you need to continue check when check60 find an error\nFor init file 'check60.json', type 'check60 -i'\nFor init clear 'check60.json' file, type 'check60 -ic'")
     sys.exit(0)
 
 if sys.argv[1] == "--init" or sys.argv[1] == "-i":
@@ -88,7 +88,7 @@ allcorrect = True
 try:
     compile = os.system(config[test]["compile"])
 except KeyError:
-    print(Fore.RED + "[check60] KeyError"+Fore.RESET)
+    print(Fore.RED + f"[check60] key not found: {config[test]["compile"]}"+Fore.RESET)
     sys.exit(1)
 
 if compile == 0:
