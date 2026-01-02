@@ -1,81 +1,108 @@
-import json, subprocess, time, sys, os
+import subprocess, time, sys, os, yaml
 from colorama import Fore, Back, Style
 
+config_file = "check60.yaml"
+
+def yaml_string(text, style=None):
+    """
+    Создает строку с указанным стилем YAML.
+    
+    Параметры:
+    - text: текст строки
+    - style: 
+        '|' - literal (сохраняет все переносы)
+        '>' - folded (сворачивает одиночные переносы)
+        None - обычная строка
+    """
+    class StyledString(str):
+        pass
+    
+    def representer(dumper, data):
+        return dumper.represent_scalar('tag:yaml.org,2002:str', str(data), style=style)
+    
+    yaml.add_representer(StyledString, representer)
+    return StyledString(text)
+
 if len(sys.argv) == 1:
-    print("check60 utility.\nusage: check60 <test name>\nFor usage you need file 'check60.json'.\n\nUse flag '-se' if you need to continue check when check60 find an error\nFor init file 'check60.json', type 'check60 -i'\nFor init clear 'check60.json' file, type 'check60 -ic'")
+    print("check60 utility.\nusage: check60 <test name>\nFor usage you need file 'check60.yaml'.\n\nUse flag '-se' if you need to continue check when check60 find an error\nFor init file 'check60.yaml', type 'check60 -i'\nFor init clear 'check60.yaml' file, type 'check60 -ic'\n\nFor read old config files ('check60.json'), use flag '-j' or '--json'")
     sys.exit(0)
 
 if sys.argv[1] == "--init" or sys.argv[1] == "-i":
-    with open("check60.json", "w") as f:
-        f.write(r"""{
-    "py-example": {
-        "compile": "",
-        "runs": [
-            {
-                "start": "python test.py",
-                "input": "10\n2\n",
-                "output": "5.0\n",
-                "timeout": 1000
+    with open(config_file, "w") as f:
+        data = {
+            "py-example": {
+                "compile": "",
+                "runs": [
+                    {
+                        "start": "python test.py",
+                        "input": yaml_string("10\n2\n", style="|"),
+                        "output": yaml_string("5.0\n", style="|"),
+                        "timeout": 1000
+                    },
+                    {
+                        "start": "python test.py",
+                        "input": yaml_string("30\n5\n", style="|"),
+                        "output": yaml_string("6.0\n", style="|"),
+                        "timeout": 1000
+                    },
+                    {
+                        "start": "python test.py",
+                        "input": yaml_string("10\n4\n", style="|"),
+                        "output": yaml_string("2.5\n", style="|"),
+                        "timeout": 1000
+                    }
+                ]
             },
-            {
-                "start": "python test.py",
-                "input": "30\n5\n",
-                "output": "6.0\n",
-                "timeout": 1000
-            },
-            {
-                "start": "python test.py",
-                "input": "10\n4\n",
-                "output": "2.5\n",
-                "timeout": 1000
+            "cpp-example": {
+                "compile": "clang test.cpp -o test",
+                "runs": [
+                    {
+                        "start": ".\\test",
+                        "input": yaml_string("10\n2\n", style="|"),
+                        "output": yaml_string("5.0\n", style="|"),
+                        "timeout": 1000
+                    },
+                    {
+                        "start": ".\\test",
+                        "input": yaml_string("30\n5\n", style="|"),
+                        "output": yaml_string("6.0\n", style="|"),
+                        "timeout": 1000
+                    },
+                    {
+                        "start": ".\\test",
+                        "input": yaml_string("10\n4\n", style="|"),
+                        "output": yaml_string("2.5\n", style="|"),
+                        "timeout": 1000
+                    }
+                ]
             }
-        ]
-    },
-    "cpp-example": {
-        "compile": "clang test.cpp -o test",
-        "runs": [
-            {
-                "start": ".\\test",
-                "input": "10\n2\n",
-                "output": "5.0\n",
-                "timeout": 1000
-            },
-            {
-                "start": ".\\test",
-                "input": "30\n5\n",
-                "output": "6.0\n",
-                "timeout": 1000
-            },
-            {
-                "start": ".\\test",
-                "input": "10\n4\n",
-                "output": "2.5\n",
-                "timeout": 1000
-            }
-        ]
-    }
-}""")
+        }
+        yaml.dump(data, f, allow_unicode=True, default_flow_style=False)
     sys.exit(0)
 
 if sys.argv[1] == "--init-clear" or sys.argv[1] == "-ic":
-    with open("check60.json", "w") as f:
-        f.write(r"""{
-    "check": {
-        "compile": "",
-        "runs": [
-            {
-                "start": "",
-                "input": "",
-                "output": "",
-                "timeout": 1000
+    with open(config_file, "w") as f:
+        data = {
+            "check": {
+                "compile": "",
+                "runs": [
+                    {
+                        "start": "",
+                        "input": "",
+                        "output": "",
+                        "timeout": 1000
+                    }
+                ]
             }
-        ]
-    }
-}""")
+        }
+        yaml.dump(data, f, allow_unicode=True, default_flow_style=False)
     sys.exit(0)
 
+if "--json" in sys.argv or "-j" in sys.argv:
+    config_file = "check60.json"
+
 try:
-    config = json.load(open("check60.json", "r"))
+    config = yaml.safe_load(open(config_file, "r"))
 except FileNotFoundError:
     print(Fore.RED + "[check60] config file not found"+Fore.RESET)
     sys.exit(1)
@@ -85,10 +112,15 @@ exitOnError = "-se" not in sys.argv
 test = sys.argv[1]
 allcorrect = True
 
+if test not in config:
+    print(Fore.RED + f"[check60] key not found: {test}"+Fore.RESET)
+    sys.exit(1)
+
 try:
     compile = os.system(config[test]["compile"])
 except KeyError:
-    print(Fore.RED + f"[check60] key not found: {config[test]["compile"]}"+Fore.RESET)
+    print(Fore.RED + f"[check60] key not found: {test}['compile']"+Fore.RESET)
+
     sys.exit(1)
 
 if compile == 0:
