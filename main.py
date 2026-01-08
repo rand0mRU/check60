@@ -144,7 +144,8 @@ if compile == 0:
                 text=True
             )
         except FileNotFoundError:
-            print(f"[check60] failed to complete '{j["start"]}': file not found")            
+            print(f"[check60] failed to complete '{j["start"]}': file not found")
+            sys.exit(1)
         try:
             if j["timeout"] != 0:
                 stdout, stderr = process.communicate(input=j["input"], timeout=float(j["timeout"] / 1000))
