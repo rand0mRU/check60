@@ -144,7 +144,7 @@ if compile == 0:
                 text=True
             )
         except FileNotFoundError:
-            print(f"[check60] failed to complete '{j["start"]}': file not found")
+            print(Fore.RED + f"[check60] failed to complete '{j["start"]}': file not found" + Fore.RESET)
             sys.exit(1)
         try:
             if j["timeout"] != 0:
