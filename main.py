@@ -1,7 +1,7 @@
 import subprocess, time, sys, os, yaml
 from colorama import Fore, Back, Style
 
-config_file = "check60.yaml"
+config_file = ".check60.yaml"
 
 def yaml_string(text, style=None):
     """
@@ -24,7 +24,7 @@ def yaml_string(text, style=None):
     return StyledString(text)
 
 if len(sys.argv) == 1:
-    print("check60 utility.\nusage: check60 <test name>\nFor usage you need file 'check60.yaml'.\n\nUse flag '-se' if you need to continue check when check60 find an error\nFor init file 'check60.yaml', type 'check60 -i'\nFor init clear 'check60.yaml' file, type 'check60 -ic'\n\nFor read old config files ('check60.json'), use flag '-j' or '--json'")
+    print("check60 utility.\nusage: check60 <test name>\nFor usage you need file '.check60.yaml'.\n\nUse flag '-se' if you need to continue check when check60 find an error\nFor init file '.check60.yaml', type 'check60 -i'\nFor init clear '.check60.yaml' file, type 'check60 -ic'\n\nFor read old config files ('check60.json'), use flag '-j' or '--json'")
     sys.exit(0)
 
 if sys.argv[1] == "--init" or sys.argv[1] == "-i":
@@ -135,13 +135,16 @@ if compile == 0:
         return_code = 0
         stdout = ""; stderr = ""
         startedAt = time.time()
-        process = subprocess.Popen(
-            j["start"].split(" "),
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
+        try:
+            process = subprocess.Popen(
+                j["start"].split(" "),
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+        except FileNotFoundError:
+            print(f"[check60] failed to complete '{j["start"]}': file not found")            
         try:
             if j["timeout"] != 0:
                 stdout, stderr = process.communicate(input=j["input"], timeout=float(j["timeout"] / 1000))
