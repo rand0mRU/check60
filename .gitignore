@@ -4,3 +4,5 @@ check60.spec
 check60.json
 check60.yaml
 .check60.yaml
+
+__pycache__/*

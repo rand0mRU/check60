@@ -1,30 +1,12 @@
 import subprocess, time, sys, os, yaml
 from colorama import Fore, Back, Style
+from cf_problem_get import *
+from yaml_helper import *
 
 config_file = ".check60.yaml"
 
-def yaml_string(text, style=None):
-    """
-    Создает строку с указанным стилем YAML.
-    
-    Параметры:
-    - text: текст строки
-    - style: 
-        '|' - literal (сохраняет все переносы)
-        '>' - folded (сворачивает одиночные переносы)
-        None - обычная строка
-    """
-    class StyledString(str):
-        pass
-    
-    def representer(dumper, data):
-        return dumper.represent_scalar('tag:yaml.org,2002:str', str(data), style=style)
-    
-    yaml.add_representer(StyledString, representer)
-    return StyledString(text)
-
 if len(sys.argv) == 1:
-    print("check60 utility.\nusage: check60 <test name>\nFor usage you need file '.check60.yaml'.\n\nUse flag '-se' if you need to continue check when check60 find an error\nFor init file '.check60.yaml', type 'check60 -i'\nFor init clear '.check60.yaml' file, type 'check60 -ic'\n\nFor read old config files ('check60.json'), use flag '-j' or '--json'")
+    print("check60 utility.\nusage: check60 <test name>\nFor usage you need file '.check60.yaml'.\n\nUse 'check60 -w' or 'check60 --web' for copy examples from Codeforces using extension for Chrome\nUse 'check60 -c <link>' or 'check60 --copy <link>' for copy examples from problem on codeforces\nUse flag '-se' if you need to continue check when check60 find an error\nFor init file '.check60.yaml', type 'check60 -i'\nFor init clear '.check60.yaml' file, type 'check60 -ic'\n\nFor read old config files ('check60.json'), use flag '-j' or '--json'")
     sys.exit(0)
 
 if sys.argv[1] == "--init" or sys.argv[1] == "-i":
@@ -100,6 +82,27 @@ if sys.argv[1] == "--init-clear" or sys.argv[1] == "-ic":
 
 if "--json" in sys.argv or "-j" in sys.argv:
     config_file = "check60.json"
+
+if sys.argv[1] == "-c" or sys.argv[1] == "--copy":
+    link = sys.argv[2]
+    contest, problem = get_contest_problem_fr_link(link)
+    name = contest + "-" + problem
+    print("[check60] try to get examples, now will open Chrome / Chromium window...")
+    data = get_examples_undetected(link=link)
+    if len(data) == 0:
+        print(Fore.RED + "[check60] couldn't get the data" + Fore.RESET)
+        sys.exit(1)
+    new_test(name, data, config_test)
+    print(Fore.GREEN + f"[check60] test is written as '{name}'" + Fore.RESET)
+    sys.exit(0)
+
+
+if sys.argv[1] == "-w" or sys.argv[1] == "--web":
+    try:
+        get_from_extension(config_file)
+    except KeyboardInterrupt:
+        print(Fore.GREEN + "[check60] done" + Fore.RESET)
+    sys.exit(0)
 
 try:
     config = yaml.safe_load(open(config_file, "r"))
